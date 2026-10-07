@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#8b7fc4">
+  <meta name="description" content="ECHO — Today, for Tomorrow. A private daily photo diary.">
+  <link rel="manifest" href="manifest.json">
+  <title>ECHO — Today, for Tomorrow</title>
+  <style>
+    :root {
+      --lavender:#8b7fc4;
+      --lavender-dark:#675ca3;
+      --lavender-soft:#eeeafd;
+      --yellow:#ffd95a;
+      --yellow-soft:#fff5c9;
+      --ink:#27243a;
+      --muted:#77738a;
+      --bg:#f8f7fc;
+      --card:#ffffff;
+      --line:#e7e4f0;
+      --danger:#c94b5a;
+      --success:#3e8b67;
+      --shadow:0 12px 35px rgba(49,43,85,.10);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    }
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    .app{width:min(520px,100%);margin:auto;min-height:100vh;background:var(--bg);padding-bottom:92px}
+    header{padding:25px 20px 12px;display:flex;justify-content:space-between;align-items:center}
+    .logo{font-size:27px;font-weight:900;letter-spacing:.12em}
+    .tagline{font-size:12px;color:var(--muted);margin-top:2px}
+    .install-btn{display:none;border:0;background:var(--yellow);color:var(--ink);padding:9px 12px;border-radius:12px;font-weight:800}
+    main{padding:0 18px}
+    .screen{display:none}
+    .screen.active{display:block}
+    .date{color:var(--muted);font-size:14px;font-weight:700;margin:8px 2px 16px}
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+    .stat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 5px 18px rgba(49,43,85,.05)}
+    .stat .number{font-size:28px;font-weight:900}
+    .stat .label{font-size:12px;color:var(--muted);margin-top:2px}
+    .hero-card{
+      background:linear-gradient(135deg,var(--lavender),#aaa1df);
+      color:white;border-radius:var(--radius);padding:23px;box-shadow:var(--shadow);margin-bottom:15px
+    }
+    .hero-card h2{margin:0 0 7px;font-size:28px}
+    .hero-card p{margin:0;color:#f3f1ff;font-size:14px;line-height:1.55}
+    .timer{
+      display:none;margin:15px 0;padding:13px 15px;border-radius:16px;background:var(--yellow-soft);
+      border:1px solid #efd878;justify-content:space-between;align-items:center
+    }
+    .timer.show{display:flex}
+    .timer strong{font-size:22px}
+    .btn{
+      border:0;border-radius:15px;padding:13px 17px;font-weight:900;transition:.15s;
+    }
+    .btn:active{transform:scale(.98)}
+    .btn.primary{background:var(--yellow);color:var(--ink)}
+    .btn.lavender{background:var(--lavender);color:white}
+    .btn.secondary{background:var(--lavender-soft);color:var(--lavender-dark)}
+    .btn.danger{background:#ffe5e8;color:var(--danger)}
+    .btn.ghost{background:transparent;color:var(--lavender-dark)}
+    .btn.full{width:100%}
+    .challenge-row{display:flex;gap:10px;margin:14px 0}
+    .challenge-row .btn{flex:1}
+    .capture-card,.preview-card,.saved-card,.memory-card,.settings-card{
+      background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 5px 20px rgba(49,43,85,.05);margin-bottom:15px
+    }
+    .capture-card h3,.preview-card h3,.saved-card h3,.settings-card h3{margin:0 0 8px}
+    .muted{color:var(--muted);font-size:13px;line-height:1.5}
+    .camera-preview{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:17px;background:#1e1b29;display:block}
+    .draft-img{width:100%;border-radius:17px;display:block;background:#eee}
+    .form-label{display:block;font-weight:800;font-size:13px;margin:15px 0 7px}
+    textarea{
+      width:100%;resize:none;border:1px solid var(--line);border-radius:13px;padding:12px;outline:none;background:#fcfbff
+    }
+    textarea:focus{border-color:var(--lavender);box-shadow:0 0 0 3px rgba(139,127,196,.12)}
+    .moods{display:flex;gap:8px;flex-wrap:wrap}
+    .mood{
+      width:46px;height:46px;border:1px solid var(--line);background:white;border-radius:13px;font-size:23px
+    }
+    .mood.selected{border:2px solid var(--lavender);background:var(--lavender-soft)}
+    .action-row{display:flex;gap:9px;margin-top:15px}
+    .action-row .btn{flex:1}
+    .saved-photo{width:100%;border-radius:17px;display:block}
+    .caption{margin:11px 0 5px;font-size:15px}
+    .meta{color:var(--muted);font-size:12px}
+    .memory-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+    .memory-thumb{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:13px;background:#e8e5f2;border:0;padding:0}
+    .memory-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .memory-date{position:absolute;left:6px;bottom:6px;background:rgba(255,255,255,.9);padding:4px 7px;border-radius:8px;font-size:10px;font-weight:900}
+    .empty{text-align:center;padding:45px 20px;color:var(--muted)}
+    .empty .emoji{font-size:45px}
+    .bottom-nav{
+      position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);
+      background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+      display:grid;grid-template-columns:1fr 1fr;padding:9px 18px 12px;z-index:20
+    }
+    .tab{border:0;background:transparent;color:var(--muted);padding:8px;border-radius:14px;font-weight:900}
+    .tab.active{background:var(--lavender-soft);color:var(--lavender-dark)}
+    .notice{padding:12px;border-radius:13px;background:var(--yellow-soft);border:1px solid #efdc83;font-size:12px;color:#665414;margin-bottom:15px}
+    dialog{width:min(500px,92%);border:0;border-radius:22px;padding:0;box-shadow:0 25px 70px rgba(0,0,0,.25)}
+    dialog::backdrop{background:rgba(31,27,48,.58)}
+    .dialog-body{padding:18px}
+    .dialog-body img{width:100%;border-radius:16px}
+    .dialog-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .close{border:0;background:var(--lavender-soft);border-radius:10px;width:38px;height:38px;font-size:20px}
+    .toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);width:min(480px,90%);background:#29263a;color:white;padding:12px 15px;border-radius:13px;text-align:center;display:none;z-index:50;font-size:13px}
+    .toast.show{display:block}
+    @media(max-width:380px){main{padding:0 12px}.memory-grid{gap:5px}.hero-card h2{font-size:24px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo">ECHO</div>
+      <div class="tagline">today, for tomorrow</div>
+    </div>
+    <button id="installBtn" class="install-btn">Install</button>
+  </header>
+
+  <main>
+    <section id="todayScreen" class="screen active">
+      <div id="todayDate" class="date"></div>
+
+      <div class="stats">
+        <div class="stat"><div id="streakCount" class="number">0</div><div class="label">🔥 day streak</div></div>
+        <div class="stat"><div id="totalCount" class="number">0</div><div class="label">📸 memories</div></div>
+      </div>
+
+      <div class="hero-card">
+        <h2>One real moment.</h2>
+        <p>No likes. No followers. Just one honest picture, one line, and one mood from your day.</p>
+      </div>
+
+      <div id="notice" class="notice">Your memories stay on this device. No account or server is required.</div>
+
+      <div id="timerBox" class="timer">
+        <div><div class="muted">Be real now</div><strong id="timerText">02:00</strong></div>
+        <button id="stopChallenge" class="btn secondary">Stop</button>
+      </div>
+
+      <div id="captureCard" class="capture-card">
+        <h3>Today's memory</h3>
+        <p class="muted">Take one photo using the back camera followed by the front camera. If camera access is unavailable, choose a photo from your device.</p>
+        <div class="challenge-row">
+          <button id="challengeBtn" class="btn secondary">⏱ 2-min challenge</button>
+          <button id="snapBtn" class="btn primary">📸 Take today's snap</button>
+        </div>
+        <input id="fileInput" type="file" accept="image/*" capture="environment" hidden>
+      </div>
+
+      <div id="cameraCard" class="capture-card" style="display:none">
+        <h3>Camera</h3>
+        <video id="video" class="camera-preview" autoplay playsinline muted></video>
+        <p id="cameraStatus" class="muted">Preparing camera…</p>
+        <button id="captureFrameBtn" class="btn primary full">Capture frame</button>
+      </div>
+
+      <div id="previewCard" class="preview-card" style="display:none">
+        <h3>Preview your memory</h3>
+        <img id="draftImage" class="draft-img" alt="Photo preview">
+        <label class="form-label" for="caption">One-line caption <span id="captionCount">0/80</span></label>
+        <textarea id="caption" maxlength="80" rows="2" placeholder="What was this moment?"></textarea>
+
+        <div class="form-label">Mood</div>
+        <div id="moods" class="moods"></div>
+
+        <div class="action-row">
+          <button id="retakeBtn" class="btn secondary">Retake</button>
+          <button id="saveBtn" class="btn primary">Save memory</button>
+        </div>
+      </div>
+
+      <div id="savedCard" class="saved-card" style="display:none"></div>
+    </section>
+
+    <section id="memoriesScreen" class="screen">
+      <div class="date">Your private visual timeline</div>
+      <div class="settings-card">
+        <h3>🔔 Daily reminder</h3>
+        <p class="muted">The report specifies a demonstration reminder while the app is open. It appears shortly after permission is granted.</p>
+        <button id="reminderBtn" class="btn lavender full">Turn on reminder</button>
+      </div>
+      <div id="memoryGrid" class="memory-grid"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="tab active" data-tab="todayScreen">📸 Today</button>
+    <button class="tab" data-tab="memoriesScreen">🖼 Memories</button>
+  </nav>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<dialog id="detailDialog">
+  <div class="dialog-body">
+    <div class="dialog-head">
+      <strong>Memory</strong>
+      <button id="closeDialog" class="close">×</button>
+    </div>
+    <img id="detailImage" alt="Memory">
+    <p id="detailMeta" class="meta"></p>
+    <p id="detailMood"></p>
+    <p id="detailCaption" class="caption"></p>
+    <button id="deleteBtn" class="btn danger full">Delete memory</button>
+  </div>
+</dialog>
+
+<script>
+const DB_NAME = "echo";
+const DB_VERSION = 1;
+const STORE = "days";
+const MOODS = ["😊","😍","😌","😔","🔥"];
+
+let db;
+let draft = null;
+let selectedMood = "😊";
+let challengeTimer = null;
+let challengeEndsAt = 0;
+let challengeOnTime = false;
+let currentDetailDate = null;
+let deferredInstallPrompt = null;
+
+const $ = id => document.getElementById(id);
+
+function key(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,"0");
+  const d = String(date.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+function displayDate(date = new Date()) {
+  return date.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+}
+function previousDate(date) {
+  const d = new Date(date);
+  d.setDate(d.getDate()-1);
+  return d;
+}
+function toast(msg) {
+  $("toast").textContent = msg;
+  $("toast").classList.add("show");
+  setTimeout(() => $("toast").classList.remove("show"), 2600);
+}
+
+function openDB() {
+  return new Promise((resolve,reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains(STORE)) {
+        database.createObjectStore(STORE,{keyPath:"date"});
+      }
+    };
+    request.onsuccess = () => { db=request.result; resolve(db); };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function all() {
+  return new Promise((resolve,reject) => {
+    const tx = db.transaction(STORE,"readonly");
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result.sort((a,b)=>b.date.localeCompare(a.date)));
+    req.onerror = () => reject(req.error);
+  });
+}
+function today() {
+  return new Promise((resolve,reject) => {
+    const tx = db.transaction(STORE,"readonly");
+    const req = tx.objectStore(STORE).get(key());
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+function put(entry) {
+  return new Promise((resolve,reject) => {
+    const tx = db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).put(entry);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+function del(date) {
+  return new Promise((resolve,reject) => {
+    const tx = db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).delete(date);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function streak(list) {
+  const dates = new Set(list.map(e=>e.date));
+  let d = new Date();
+  if (!dates.has(key(d))) d = previousDate(d);
+  let count = 0;
+  while (dates.has(key(d))) {
+    count++;
+    d = previousDate(d);
+  }
+  return count;
+}
+
+async function render() {
+  const list = await all();
+  const t = list.find(e=>e.date===key()) || null;
+  $("todayDate").textContent = displayDate();
+  $("streakCount").textContent = streak(list);
+  $("totalCount").textContent = list.length;
+
+  $("captureCard").style.display = t ? "none" : "block";
+  if (t) {
+    $("savedCard").style.display = "block";
+    show(t);
+  } else {
+    $("savedCard").style.display = "none";
+  }
+
+  renderMemories(list);
+}
+
+function show(entry) {
+  $("savedCard").innerHTML = `
+    <h3>Today's memory ✨</h3>
+    <img class="saved-photo" src="${entry.img}" alt="Today's memory">
+    <p class="caption">${escapeHtml(entry.cap || "No caption")}</p>
+    <div class="meta">${entry.date} · ${entry.mood} ${entry.onTime ? "· ⏱ On time" : ""}</div>
+  `;
+}
+
+function renderMemories(list) {
+  const grid = $("memoryGrid");
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="emoji">📷</div><p>No memories yet.<br>Take today's first snap.</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(e => `
+    <button class="memory-thumb" data-date="${e.date}" aria-label="Open memory ${e.date}">
+      <img src="${e.img}" alt="">
+      <span class="memory-date">${formatMonthDay(e.date)}</span>
+    </button>
+  `).join("");
+  grid.querySelectorAll(".memory-thumb").forEach(btn => {
+    btn.addEventListener("click", () => openDetail(btn.dataset.date));
+  });
+}
+function formatMonthDay(s) {
+  const [y,m,d] = s.split("-").map(Number);
+  return new Date(y,m-1,d).toLocaleDateString("en-IN",{month:"short",day:"numeric"});
+}
+function escapeHtml(v) {
+  return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+function setupMoods() {
+  $("moods").innerHTML = MOODS.map(m => `<button type="button" class="mood ${m===selectedMood?"selected":""}" data-mood="${m}">${m}</button>`).join("");
+  $("moods").querySelectorAll(".mood").forEach(btn => btn.addEventListener("click",()=>{
+    selectedMood = btn.dataset.mood;
+    setupMoods();
+  }));
+}
+
+function updateCaptionCount() {
+  $("captionCount").textContent = `${$("caption").value.length}/80`;
+}
+$("caption").addEventListener("input",updateCaptionCount);
+
+async function resizeImage(source, maxWidth=720) {
+  const img = new Image();
+  img.src = source;
+  await img.decode();
+  const scale = Math.min(1,maxWidth/img.width);
+  const w = Math.round(img.width*scale);
+  const h = Math.round(img.height*scale);
+  const canvas = document.createElement("canvas");
+  canvas.width=w; canvas.height=h;
+  canvas.getContext("2d").drawImage(img,0,0,w,h);
+  return canvas.toDataURL("image/jpeg",0.75);
+}
+
+async function grab(facing) {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:960}},
+    audio:false
+  });
+  const video = $("video");
+  video.srcObject = stream;
+  $("cameraCard").style.display = "block";
+  $("cameraStatus").textContent = facing === "environment" ? "Back camera — ready" : "Front camera — ready";
+  await video.play();
+  await new Promise(r=>setTimeout(r,700));
+  const canvas = document.createElement("canvas");
+  const width = Math.min(video.videoWidth || 1280,720);
+  const height = Math.round(width*(video.videoHeight||960)/(video.videoWidth||1280));
+  canvas.width=width; canvas.height=height;
+  canvas.getContext("2d").drawImage(video,0,0,width,height);
+  stream.getTracks().forEach(t=>t.stop());
+  video.srcObject=null;
+  $("cameraCard").style.display="none";
+  return canvas.toDataURL("image/jpeg",0.75);
+}
+
+function compose(back, front) {
+  return new Promise(resolve=>{
+    const a=new Image(), b=new Image();
+    a.onload=()=>{
+      const canvas=document.createElement("canvas");
+      const width=720;
+      const height=Math.round(width*a.height/a.width);
+      canvas.width=width; canvas.height=height;
+      const ctx=canvas.getContext("2d");
+      ctx.drawImage(a,0,0,width,height);
+      if(front){
+        b.onload=()=>{
+          const insetW=Math.round(width*0.30);
+          const insetH=Math.round(insetW*b.height/b.width);
+          const x=18,y=18;
+          ctx.fillStyle="white";
+          ctx.fillRect(x-5,y-5,insetW+10,insetH+10);
+          ctx.drawImage(b,x,y,insetW,insetH);
+          resolve(canvas.toDataURL("image/jpeg",0.75));
+        };
+        b.src=front;
+      } else resolve(canvas.toDataURL("image/jpeg",0.75));
+    };
+    a.src=back;
+  });
+}
+
+async function snap() {
+  try {
+    let back;
+    try {
+      back = await grab("environment");
+    } catch(e) {
+      $("fileInput").click();
+      return;
+    }
+    let front = null;
+    try {
+      front = await grab("user");
+    } catch(e) {}
+    const combined = await compose(back,front);
+    setDraft(combined);
+  } catch(e) {
+    toast("Camera could not be opened. Choose a photo instead.");
+    $("fileInput").click();
+  }
+}
+
+async function setDraft(dataUrl) {
+  draft = await resizeImage(dataUrl,720);
+  $("draftImage").src=draft;
+  $("previewCard").style.display="block";
+  $("captureCard").style.display="none";
+  $("caption").value="";
+  updateCaptionCount();
+  selectedMood="😊";
+  setupMoods();
+  window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+}
+
+$("snapBtn").addEventListener("click",snap);
+$("captureFrameBtn").addEventListener("click",async()=>{
+  try {
+    const video=$("video");
+    const canvas=document.createElement("canvas");
+    canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+    canvas.getContext("2d").drawImage(video,0,0);
+    video.srcObject?.getTracks().forEach(t=>t.stop());
+    video.srcObject=null;
+    $("cameraCard").style.display="none";
+    setDraft(canvas.toDataURL("image/jpeg",0.75));
+  } catch { toast("Could not capture the frame."); }
+});
+
+$("fileInput").addEventListener("change",async e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>setDraft(reader.result);
+  reader.readAsDataURL(file);
+  e.target.value="";
+});
+
+$("retakeBtn").addEventListener("click",()=>{
+  draft=null;
+  $("previewCard").style.display="none";
+  $("captureCard").style.display="block";
+});
+$("saveBtn").addEventListener("click",async()=>{
+  if(!draft) return;
+  const entry={
+    date:key(),
+    img:draft,
+    cap:$("caption").value.trim(),
+    mood:selectedMood,
+    onTime:challengeOnTime && challengeEndsAt>0 && Date.now()<=challengeEndsAt
+  };
+  await put(entry);
+  stopChallenge();
+  draft=null;
+  $("previewCard").style.display="none";
+  toast("Memory saved ✨");
+  await render();
+  switchTab("todayScreen");
+});
+
+function startChallenge() {
+  if(challengeTimer) return;
+  challengeEndsAt=Date.now()+120000;
+  challengeOnTime=true;
+  $("timerBox").classList.add("show");
+  tickChallenge();
+  challengeTimer=setInterval(tickChallenge,1000);
+}
+function tickChallenge() {
+  const left=Math.max(0,challengeEndsAt-Date.now());
+  const sec=Math.floor(left/1000);
+  $("timerText").textContent=`${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;
+  if(left<=0){
+    challengeOnTime=false;
+    $("timerText").textContent="00:00";
+    stopChallenge(false);
+    toast("Late, but still real. Snap now!");
+  }
+}
+function stopChallenge(reset=true) {
+  if(challengeTimer) clearInterval(challengeTimer);
+  challengeTimer=null;
+  if(reset){challengeEndsAt=0;challengeOnTime=false;}
+  $("timerBox").classList.remove("show");
+}
+$("challengeBtn").addEventListener("click",startChallenge);
+$("stopChallenge").addEventListener("click",()=>stopChallenge());
+
+async function openDetail(date) {
+  const list=await all();
+  const entry=list.find(e=>e.date===date);
+  if(!entry) return;
+  currentDetailDate=date;
+  $("detailImage").src=entry.img;
+  $("detailMeta").textContent=entry.date + (entry.onTime ? " · ⏱ On time" : "");
+  $("detailMood").textContent="Mood: "+entry.mood;
+  $("detailCaption").textContent=entry.cap || "No caption";
+  $("detailDialog").showModal();
+}
+$("closeDialog").addEventListener("click",()=>$("detailDialog").close());
+$("deleteBtn").addEventListener("click",async()=>{
+  if(!currentDetailDate) return;
+  if(!confirm("Delete this memory?")) return;
+  await del(currentDetailDate);
+  $("detailDialog").close();
+  toast("Memory deleted.");
+  render();
+});
+
+async function enableReminder() {
+  if(!("Notification" in window)) {
+    toast("Notifications are not supported in this browser.");
+    return;
+  }
+  const permission=await Notification.requestPermission();
+  if(permission!=="granted") {
+    toast("Notification permission was not granted.");
+    return;
+  }
+  try {
+    const registration=await navigator.serviceWorker.ready;
+    const delay=10000+Math.floor(Math.random()*50000);
+    $("reminderBtn").disabled=true;
+    $("reminderBtn").textContent="Reminder enabled ✓";
+    toast("Demo reminder scheduled while the app is open.");
+    setTimeout(()=>registration.showNotification("Time to be real!",{
+      body:"Take today's photo for ECHO.",
+      icon:"icon-192.png"
+    }),delay);
+  } catch {
+    toast("Service Worker is not ready yet.");
+  }
+}
+$("reminderBtn").addEventListener("click",enableReminder);
+
+function switchTab(id) {
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===id));
+  if(id==="memoriesScreen") render();
+}
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>switchTab(t.dataset.tab)));
+
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  $("installBtn").style.display="block";
+});
+$("installBtn").addEventListener("click",async()=>{
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt=null;
+  $("installBtn").style.display="none";
+});
+
+if("serviceWorker" in navigator) {
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+(async()=>{
+  setupMoods();
+  try {
+    await openDB();
+    await render();
+  } catch(e) {
+    console.error(e);
+    toast("Local database could not be opened.");
+  }
+})();
+</script>
+</body>
+</html>

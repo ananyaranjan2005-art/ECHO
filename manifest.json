@@ -1,0 +1,23 @@
+{
+  "name": "ECHO — Today, for Tomorrow",
+  "short_name": "ECHO",
+  "description": "A private offline-first daily photo diary.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f7fc",
+  "theme_color": "#8b7fc4",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
